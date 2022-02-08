@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-const difficulty = 6
+const difficulty = 6 // valid hash value must have "difficulty" zeros as prefix
 const maxNonce = math.MaxInt64
 
 type ProofOfWork struct {
@@ -18,8 +18,8 @@ type ProofOfWork struct {
 }
 
 // NewProofOfWork creates new ProofOfWork
-// target value is calculated by left-shifting 1 with 256 - (diffculty * 4)
 func NewProofOfWork(b *Block) *ProofOfWork {
+	// target value is calculated by left-shifting 1 with 256 - (diffculty * 4)
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-(difficulty<<2)))
 
@@ -70,6 +70,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	return nonce, hash[:]
 }
 
+// Validate checks whether a Block has valid hash value
 func (pow *ProofOfWork) Validate() bool {
 	var hashInt big.Int
 
