@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func (b *Block) Serialize() []byte {
 	encoder := gob.NewEncoder(&result)
 
 	if err := encoder.Encode(b); err != nil {
-		_ = fmt.Errorf("Block serialization failed\n")
+		log.Println(fmt.Errorf("Block serialization failed"))
 	}
 	return result.Bytes()
 }
@@ -49,7 +50,7 @@ func DeserializeBlock(d []byte) *Block {
 	decoder := gob.NewDecoder(bytes.NewReader(d))
 
 	if err := decoder.Decode(&block); err != nil {
-		_ = fmt.Errorf("Block deserialization failed\n")
+		log.Println(fmt.Errorf("Block deserialization failed"))
 	}
 
 	return &block
