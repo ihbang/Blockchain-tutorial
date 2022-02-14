@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -50,6 +51,114 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+}
+
+// FindUnspentTransactions returns a slice of all unspent txs for address
+func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
+	var unspentTxs []Transaction
+	spentTxOuts := make(map[string][]int)
+	iter := bc.Iterator()
+
+	for {
+		block := iter.Next()
+		for _, tx := range block.Transactions {
+			txid := hex.EncodeToString(tx.ID)
+
+		Outputs:
+			for outIdx, out := range tx.Vout {
+				if spentTxOuts[txid] != nil {
+					for _, spentOut := range spentTxOuts[txid] {
+						if spentOut == outIdx {
+							continue Outputs
+						}
+					}
+				}
+				if out.CanBeUnlockedWith(address) {
+					unspentTxs = append(unspentTxs, *tx)
+				}
+			}
+
+			if !tx.IsCoinbase() {
+				for _, in := range tx.Vin {
+					if in.CanUnlockOutputWith(address) {
+						inTxID := hex.EncodeToString(in.Txid)
+						spentTxOuts[inTxID] = append(spentTxOuts[inTxID], in.Vout)
+					}
+				}
+			}
+		}
+		// exit condition: reach the genesis block
+		if len(block.PrevBlockHash) == 0 {
+			break
+		}
+	}
+	return unspentTxs
+}
+
+// FindUnspentTxOuts returns a slice of all unspent TxOutputs for address
+func (bc *Blockchain) FindUnspentTxOuts(address string) []TxOutput {
+	var unspentTxOuts []TxOutput
+	unspentTxs := bc.FindUnspentTransactions(address)
+	for _, tx := range unspentTxs {
+		for _, out := range tx.Vout {
+			if out.CanBeUnlockedWith(address) {
+				unspentTxOuts = append(unspentTxOuts, out)
+			}
+		}
+	}
+	return unspentTxOuts
+}
+
+// FindSpendableOutputs find candidate TxOuts to make 'amount' of coins for another transaction
+// return - accumulated coins, txid: txOutIdxs
+func (bc *Blockchain) FindSpendableOutputs(address string, amount int) (int, map[string][]int) {
+	unspentTxOuts := make(map[string][]int)
+	unspentTxs := bc.FindUnspentTransactions(address)
+	accumulated := 0
+
+Work:
+	for _, tx := range unspentTxs {
+		txid := hex.EncodeToString(tx.ID)
+
+		for outIdx, out := range tx.Vout {
+			if out.CanBeUnlockedWith(address) && accumulated < amount {
+				accumulated += out.Value
+				unspentTxOuts[txid] = append(unspentTxOuts[txid], outIdx)
+			}
+			if accumulated >= amount {
+				break Work
+			}
+		}
+	}
+	return accumulated, unspentTxOuts
+}
+
+// Iterator creates new BlockchainIterator for the Blockchain
+func (bc *Blockchain) Iterator() (iter *BlockchainIterator) {
+	iter = &BlockchainIterator{bc.tip, bc.db}
+	return
+}
+
+type BlockchainIterator struct {
+	currentHash []byte // hash value of Block at current position
+	db          *bolt.DB
+}
+
+// Next returns next Block of the Blockchain
+func (iter *BlockchainIterator) Next() *Block {
+	var block *Block
+
+	// get serialized Block with currentHash and deserialize it
+	_ = iter.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(blocksBucket))
+		serializedBlock := bucket.Get(iter.currentHash)
+		block = DeserializeBlock(serializedBlock)
+
+		return nil
+	})
+	// update currentHash to current Block's PrevBlockHash
+	iter.currentHash = block.PrevBlockHash
+	return block
 }
 
 // NewGenesisBlock creates "Genesis Block" of the blockchain
@@ -131,32 +240,4 @@ func CreateBlockchain(address string) *Blockchain {
 
 	bc := Blockchain{tip, db}
 	return &bc
-}
-
-// Iterator creates new BlockchainIterator for the Blockchain
-func (bc *Blockchain) Iterator() (iter *BlockchainIterator) {
-	iter = &BlockchainIterator{bc.tip, bc.db}
-	return
-}
-
-type BlockchainIterator struct {
-	currentHash []byte // hash value of Block at current position
-	db          *bolt.DB
-}
-
-// Next returns next Block of the Blockchain
-func (iter *BlockchainIterator) Next() *Block {
-	var block *Block
-
-	// get serialized Block with currentHash and deserialize it
-	_ = iter.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(blocksBucket))
-		serializedBlock := bucket.Get(iter.currentHash)
-		block = DeserializeBlock(serializedBlock)
-
-		return nil
-	})
-	// update currentHash to current Block's PrevBlockHash
-	iter.currentHash = block.PrevBlockHash
-	return block
 }

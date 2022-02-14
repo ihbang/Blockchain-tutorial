@@ -115,20 +115,22 @@ func (cli CLI) printChain() {
 	}
 }
 
+// getBalance prints total balance of address
 func (cli CLI) getBalance(address string) {
-	// bc := NewBlockchain(address)
-	// defer bc.db.Close()
+	bc := NewBlockchain(address)
+	defer bc.db.Close()
 
-	// balance := 0
-	// UTXOs := bc.FindUTXO(address)
+	balance := 0
+	UTXOs := bc.FindUnspentTxOuts(address)
 
-	// for _, out := range UTXOs {
-	// 	balance += out.Value
-	// }
+	for _, out := range UTXOs {
+		balance += out.Value
+	}
 
-	// fmt.Printf("Balance of '%s': %d\n", address, balance)
+	fmt.Printf("Balance of '%s': %d\n", address, balance)
 }
 
+// createBlockchain creates a new blockchain and give reward to address
 func (cli *CLI) createBlockchain(address string) {
 	bc := CreateBlockchain(address)
 	bc.db.Close()

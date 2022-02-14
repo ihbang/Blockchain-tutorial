@@ -33,6 +33,7 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	return block
 }
 
+// Serialize a block to a slice of bytes
 func (b *Block) Serialize() []byte {
 	var result bytes.Buffer
 
@@ -44,6 +45,7 @@ func (b *Block) Serialize() []byte {
 	return result.Bytes()
 }
 
+// DeserializeBlock decodes a slice of bytes to a Block
 func DeserializeBlock(d []byte) *Block {
 	var block Block
 
@@ -56,6 +58,7 @@ func DeserializeBlock(d []byte) *Block {
 	return &block
 }
 
+// HashTransactions calculates sha256 hash value of all txs in the Block
 func (b *Block) HashTransactions() []byte {
 	var txHashes [][]byte
 	var txHash [32]byte
