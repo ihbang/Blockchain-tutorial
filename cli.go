@@ -138,10 +138,10 @@ func (cli *CLI) createBlockchain(address string) {
 }
 
 func (cli *CLI) send(from, to string, amount int) {
-	// bc := NewBlockchain(from)
-	// defer bc.db.Close()
+	bc := NewBlockchain(from)
+	defer bc.db.Close()
 
-	// tx := NewUTXOTransaction(from, to, amount, bc)
-	// bc.MineBlock([]*Transaction{tx})
-	// fmt.Println("Success!")
+	tx := NewTransaction(from, to, amount, bc)
+	bc.MineBlock([]*Transaction{tx})
+	fmt.Println("Success!")
 }

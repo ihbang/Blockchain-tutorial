@@ -53,7 +53,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 	}
 }
 
-// FindUnspentTransactions returns a slice of all unspent txs for address
+// FindUnspentTransactions returns all unspent txs for address
 func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 	var unspentTxs []Transaction
 	spentTxOuts := make(map[string][]int)
@@ -81,8 +81,8 @@ func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 			if !tx.IsCoinbase() {
 				for _, in := range tx.Vin {
 					if in.CanUnlockOutputWith(address) {
-						inTxID := hex.EncodeToString(in.Txid)
-						spentTxOuts[inTxID] = append(spentTxOuts[inTxID], in.Vout)
+						inTxid := hex.EncodeToString(in.Txid)
+						spentTxOuts[inTxid] = append(spentTxOuts[inTxid], in.Vout)
 					}
 				}
 			}
@@ -95,7 +95,7 @@ func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 	return unspentTxs
 }
 
-// FindUnspentTxOuts returns a slice of all unspent TxOutputs for address
+// FindUnspentTxOuts returns all unspent TxOutputs for address
 func (bc *Blockchain) FindUnspentTxOuts(address string) []TxOutput {
 	var unspentTxOuts []TxOutput
 	unspentTxs := bc.FindUnspentTransactions(address)

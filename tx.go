@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
 	"log"
 )
@@ -63,6 +64,38 @@ func NewCoinbaseTx(to, data string) *Transaction {
 	txin := TxInput{[]byte{}, -1, data}
 	txout := TxOutput{subsidy, to}
 	tx := Transaction{nil, []TxInput{txin}, []TxOutput{txout}}
+	tx.SetID()
+	return &tx
+}
+
+func NewTransaction(from, to string, amount int, bc *Blockchain) *Transaction {
+	var inputs []TxInput
+	var outputs []TxOutput
+
+	accumulated, validOutputs := bc.FindSpendableOutputs(from, amount)
+
+	if accumulated < amount {
+		log.Panic("ERROR: Not enough coins in the wallet")
+	}
+
+	for txid, outs := range validOutputs {
+		decodedTxid, err := hex.DecodeString(txid)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		for _, out := range outs {
+			input := TxInput{decodedTxid, out, from}
+			inputs = append(inputs, input)
+		}
+	}
+
+	outputs = append(outputs, TxOutput{amount, to})
+	if accumulated > amount {
+		outputs = append(outputs, TxOutput{accumulated - amount, from})
+	}
+
+	tx := Transaction{nil, inputs, outputs}
 	tx.SetID()
 	return &tx
 }
