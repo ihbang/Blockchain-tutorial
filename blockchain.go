@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/boltdb/bolt"
+	"github.com/btcsuite/btcutil/base58"
 )
 
 const (
@@ -63,6 +64,7 @@ func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 		block := iter.Next()
 		for _, tx := range block.Transactions {
 			txid := hex.EncodeToString(tx.ID)
+			pubKey := base58.Decode(address)
 
 		Outputs:
 			for outIdx, out := range tx.Vout {
@@ -73,14 +75,14 @@ func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 						}
 					}
 				}
-				if out.CanBeUnlockedWith(address) {
+				if out.IsLockedWith(HashPubKey(pubKey)) {
 					unspentTxs = append(unspentTxs, *tx)
 				}
 			}
 
 			if !tx.IsCoinbase() {
 				for _, in := range tx.Vin {
-					if in.CanUnlockOutputWith(address) {
+					if in.UsesKey(pubKey) {
 						inTxid := hex.EncodeToString(in.Txid)
 						spentTxOuts[inTxid] = append(spentTxOuts[inTxid], in.Vout)
 					}
@@ -101,7 +103,7 @@ func (bc *Blockchain) FindUnspentTxOuts(address string) []TxOutput {
 	unspentTxs := bc.FindUnspentTransactions(address)
 	for _, tx := range unspentTxs {
 		for _, out := range tx.Vout {
-			if out.CanBeUnlockedWith(address) {
+			if out.IsLockedWith(base58.Decode(address)) {
 				unspentTxOuts = append(unspentTxOuts, out)
 			}
 		}
@@ -121,7 +123,7 @@ Work:
 		txid := hex.EncodeToString(tx.ID)
 
 		for outIdx, out := range tx.Vout {
-			if out.CanBeUnlockedWith(address) && accumulated < amount {
+			if out.IsLockedWith(base58.Decode(address)) && accumulated < amount {
 				accumulated += out.Value
 				unspentTxOuts[txid] = append(unspentTxOuts[txid], outIdx)
 			}
