@@ -141,28 +141,6 @@ func (bc *Blockchain) Iterator() (iter *BlockchainIterator) {
 	return
 }
 
-type BlockchainIterator struct {
-	currentHash []byte // hash value of Block at current position
-	db          *bolt.DB
-}
-
-// Next returns next Block of the Blockchain
-func (iter *BlockchainIterator) Next() *Block {
-	var block *Block
-
-	// get serialized Block with currentHash and deserialize it
-	_ = iter.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(blocksBucket))
-		serializedBlock := bucket.Get(iter.currentHash)
-		block = DeserializeBlock(serializedBlock)
-
-		return nil
-	})
-	// update currentHash to current Block's PrevBlockHash
-	iter.currentHash = block.PrevBlockHash
-	return block
-}
-
 // NewGenesisBlock creates "Genesis Block" of the blockchain
 // "Genesis Block" means the first block of the blockchain
 func NewGenesisBlock(coinbase *Transaction) *Block {

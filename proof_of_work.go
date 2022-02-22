@@ -9,8 +9,10 @@ import (
 	"strconv"
 )
 
-const difficulty = 6 // valid hash value must have "difficulty" zeros as prefix
-const maxNonce = math.MaxInt64
+const (
+	difficulty = 6 // valid hash value must have "difficulty" zeros as prefix
+	maxNonce   = math.MaxInt64
+)
 
 type ProofOfWork struct {
 	block  *Block   // target Block of ProofOfWork
@@ -25,21 +27,6 @@ func NewProofOfWork(b *Block) *ProofOfWork {
 
 	pow := &ProofOfWork{block: b, target: target}
 	return pow
-}
-
-// prepareData generates []byte with member values of pow.block and nonce
-func (pow *ProofOfWork) prepareData(nonce int) []byte {
-	data := bytes.Join(
-		[][]byte{
-			pow.block.PrevBlockHash,
-			pow.block.HashTransactions(),
-			[]byte(strconv.FormatInt(pow.block.Timestamp, 16)),
-			[]byte(strconv.FormatInt(int64(difficulty), 16)),
-			[]byte(strconv.FormatInt(int64(nonce), 16)),
-		},
-		[]byte{},
-	)
-	return data
 }
 
 // Run proof-of-work process to generate valid hash value
@@ -80,4 +67,19 @@ func (pow *ProofOfWork) Validate() bool {
 
 	isValid := hashInt.Cmp(pow.target) == -1
 	return isValid
+}
+
+// prepareData generates []byte with member values of pow.block and nonce
+func (pow *ProofOfWork) prepareData(nonce int) []byte {
+	data := bytes.Join(
+		[][]byte{
+			pow.block.PrevBlockHash,
+			pow.block.HashTransactions(),
+			[]byte(strconv.FormatInt(pow.block.Timestamp, 16)),
+			[]byte(strconv.FormatInt(int64(difficulty), 16)),
+			[]byte(strconv.FormatInt(int64(nonce), 16)),
+		},
+		[]byte{},
+	)
+	return data
 }

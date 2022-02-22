@@ -37,41 +37,6 @@ func (tx *Transaction) IsCoinbase() bool {
 	return len(tx.Vin) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
 }
 
-type TxInput struct {
-	Txid      []byte
-	Vout      int
-	Signature []byte
-	Pubkey    []byte
-}
-
-// UsesKey checks if a public key in the input is same as pubKeyHash
-func (in *TxInput) UsesKey(pubKeyHash []byte) bool {
-	lockingHash := HashPubKey(in.Pubkey)
-	return bytes.Equal(lockingHash, pubKeyHash)
-}
-
-type TxOutput struct {
-	Value      int
-	PubKeyHash []byte
-}
-
-// Lock signs the output with the address
-func (out *TxOutput) Lock(address string) {
-	pubKeyHash := base58.Decode(address)
-	out.PubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
-}
-
-// IsLockedWith checks if the output can be used by the owner of the pubKey
-func (out *TxOutput) IsLockedWith(pubKeyHash []byte) bool {
-	return bytes.Equal(out.PubKeyHash, pubKeyHash)
-}
-
-func NewTxOutput(value int, address string) *TxOutput {
-	txOut := &TxOutput{value, nil}
-	txOut.Lock(address)
-	return txOut
-}
-
 // NewCoinbaseTx creates new Coinbase transaction
 // Coinbase transaction is the first transaction of the Block
 // Unlike common txs, Coinbase tx has empty TxInput

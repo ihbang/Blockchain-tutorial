@@ -14,6 +14,7 @@ func (cli CLI) printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  help: Print usage")
 	fmt.Println("  printchain: Print all the blocks of the blockchain")
+	fmt.Println("  createwallet: Create a new wallet")
 	fmt.Println("  getbalance -address ADDRESS: Get a balance of ADDRESS")
 	fmt.Println("  createblockchain -address ADDRESS: Create a blockchain and send genesis block reward to ADDRESS")
 	fmt.Println("  send -from FROM -to TO -amount AMOUNT: Send AMOUNT of coins from FROM address to TO")
@@ -32,6 +33,7 @@ func (cli *CLI) Run() {
 
 	var (
 		_                       = flag.NewFlagSet("help", flag.ExitOnError)
+		createWalletCmd         = flag.NewFlagSet("createwallet", flag.ExitOnError)
 		printChainCmd           = flag.NewFlagSet("printchain", flag.ExitOnError)
 		getBalanceCmd           = flag.NewFlagSet("getbalance", flag.ExitOnError)
 		createBlockchainCmd     = flag.NewFlagSet("createblockchain", flag.ExitOnError)
@@ -47,6 +49,8 @@ func (cli *CLI) Run() {
 	case "help":
 		cli.printUsage()
 		os.Exit(0)
+	case "createwallet":
+		err = createWalletCmd.Parse(os.Args[2:])
 	case "printchain":
 		err = printChainCmd.Parse(os.Args[2:])
 	case "getbalance":
@@ -61,6 +65,10 @@ func (cli *CLI) Run() {
 	}
 	if err != nil {
 		log.Panic(err)
+	}
+
+	if createWalletCmd.Parsed() {
+		cli.createWallet()
 	}
 
 	if printChainCmd.Parsed() {
@@ -90,6 +98,10 @@ func (cli *CLI) Run() {
 		}
 		cli.send(*sendFrom, *sendTo, *sendAmount)
 	}
+
+}
+
+func (cli CLI) createWallet() {
 
 }
 

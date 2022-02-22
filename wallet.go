@@ -13,17 +13,12 @@ import (
 
 const (
 	version            = byte(0x00)
-	walletFile         = "wallet.dat"
 	addressChecksumLen = 4
 )
 
 type Wallet struct {
 	PrivateKey ecdsa.PrivateKey
 	PublicKey  []byte
-}
-
-type Wallets struct {
-	Wallets map[string]*Wallet
 }
 
 // GetAddress creates a new bitcoin address and
@@ -36,19 +31,6 @@ func (w Wallet) GetAddress() string {
 	fullPayload := append(versionPayload, checksum...)
 	address := base58.Encode(fullPayload)
 	return address
-}
-
-// HashPubKey hashing public key with RIPEMD160(SHA256(pubKey))
-func HashPubKey(pubKey []byte) []byte {
-	publicSHA256 := sha256.Sum256(pubKey)
-
-	ripemd160Hasher := ripemd160.New()
-	_, err := ripemd160Hasher.Write(publicSHA256[:])
-	if err != nil {
-		log.Panic(err)
-	}
-	publicRIPEMD160 := ripemd160Hasher.Sum(nil)
-	return publicRIPEMD160
 }
 
 func checksum(payload []byte) []byte {
@@ -65,6 +47,19 @@ func newKeyPair() (ecdsa.PrivateKey, []byte) {
 	}
 	pubKey := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
 	return *private, pubKey
+}
+
+// HashPubKey hashing public key with RIPEMD160(SHA256(pubKey))
+func HashPubKey(pubKey []byte) []byte {
+	publicSHA256 := sha256.Sum256(pubKey)
+
+	ripemd160Hasher := ripemd160.New()
+	_, err := ripemd160Hasher.Write(publicSHA256[:])
+	if err != nil {
+		log.Panic(err)
+	}
+	publicRIPEMD160 := ripemd160Hasher.Sum(nil)
+	return publicRIPEMD160
 }
 
 func NewWallet() *Wallet {
