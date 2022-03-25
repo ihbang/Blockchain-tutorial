@@ -1,17 +1,19 @@
+use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
 
 use crate::proofofwork::ProofOfWork;
 
+#[derive(Serialize, Deserialize)]
 pub struct Block {
     timestamp: Duration,
     data: Vec<u8>,
-    prev_block_hash: [u8; 32],
-    hash: [u8; 32],
+    prev_block_hash: Vec<u8>,
+    hash: Vec<u8>,
     nonce: u64,
 }
 
 impl Block {
-    pub fn new(data: &str, prev_block_hash: &[u8; 32]) -> Self {
+    pub fn new(data: &str, prev_block_hash: &[u8]) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
@@ -20,8 +22,8 @@ impl Block {
         let mut block = Block {
             timestamp,
             data,
-            prev_block_hash: *prev_block_hash,
-            hash: [0; 32],
+            prev_block_hash: prev_block_hash.to_vec(),
+            hash: Vec::new(),
             nonce: 0,
         };
 
@@ -32,6 +34,14 @@ impl Block {
         block
     }
 
+    pub fn serialize(&self) -> Vec<u8> {
+        bincode::serialize(&self).unwrap()
+    }
+
+    pub fn deserialize(data: &[u8]) -> Block {
+        bincode::deserialize(data).unwrap()
+    }
+
     pub fn timestamp(&self) -> &Duration {
         &self.timestamp
     }
@@ -40,11 +50,11 @@ impl Block {
         &self.data
     }
 
-    pub fn prev_block_hash(&self) -> &[u8; 32] {
+    pub fn prev_block_hash(&self) -> &[u8] {
         &self.prev_block_hash
     }
 
-    pub fn hash(&self) -> &[u8; 32] {
+    pub fn hash(&self) -> &[u8] {
         &self.hash
     }
 

@@ -4,7 +4,7 @@ use std::ops::Shl;
 
 use crate::block::Block;
 
-const DIFFICULTY: u16 = 4;
+const DIFFICULTY: u16 = 6;
 const NONCE_MAX: u64 = std::u64::MAX;
 
 pub struct ProofOfWork<'a> {
@@ -20,7 +20,7 @@ impl<'a> ProofOfWork<'a> {
         ProofOfWork { block, target }
     }
 
-    pub fn run(&self) -> (u64, [u8; 32]) {
+    pub fn run(&self) -> (u64, Vec<u8>) {
         let mut hash;
 
         println!(
@@ -35,10 +35,10 @@ impl<'a> ProofOfWork<'a> {
 
             if self.target > hash_val {
                 println!("\n");
-                return (nonce, hash);
+                return (nonce, Vec::from(hash));
             }
         }
-        (NONCE_MAX, [0; 32])
+        (NONCE_MAX, vec![0; 32])
     }
 
     pub fn validate(&self) -> bool {
