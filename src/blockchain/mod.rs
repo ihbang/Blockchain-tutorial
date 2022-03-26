@@ -1,5 +1,5 @@
 use crate::block::Block;
-pub use crate::blockchain::iterator::BlockchainIterator;
+use crate::blockchain::iterator::BlockchainIterator;
 
 pub mod iterator;
 
